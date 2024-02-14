@@ -6,6 +6,7 @@ import torch.optim as topt
 from torch.utils.tensorboard import SummaryWriter
 import json
 from circuit_ud_matrix import Circuit_manager
+from scipy.stats import unitary_group
 
 #TARGET = torch.Tensor(np.array([[1., 0., 0., 0., 0., 0., 0., 0.]
 #                                   , [0., 1., 0., 0., 0., 0., 0., 0.]
@@ -15,6 +16,7 @@ from circuit_ud_matrix import Circuit_manager
 #                                   , [0., 0., 0., 0., 0., 1., 0., 0.]
 #                                   , [0., 0., 0., 0., 0., 0., 0., 1.]
 #                                   , [0., 0., 0., 0., 0., 0., 1., 0.]]))
+
 TARGET = torch.eye(16)
 LOSS_FACTOR = 1
 class DQAS4RL:
