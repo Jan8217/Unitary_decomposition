@@ -24,7 +24,6 @@ def loss_fn(params): # define lost function
     loss = torch.linalg.norm(unitary_matrix - expected_qvalues) * 1
     return loss
 
-
 opt = torch.optim.Adam([params], lr=0.1)  # set up the optimizer
 epoch = 10000 # number of epoch in the optimization routine
 
