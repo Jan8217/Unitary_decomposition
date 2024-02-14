@@ -37,7 +37,7 @@ parser.add_argument("--seed", default=1234, type=int)
 parser.add_argument("--num_placeholders", default=10, type=int)# *
 parser.add_argument("--opt_struc", default='Adam', type=str)
 parser.add_argument("--structure_batch", default=10, type=int)
-parser.add_argument("--num_qubits", default=3, type=int)# *
+parser.add_argument("--num_qubits", default=4, type=int)# *
 parser.add_argument("--struc_early_stop", default=0, type=int) # *
 parser.add_argument("--learning_step", default=5, type=int) # *
 parser.add_argument("--p_search", default=False, type=bool) # *
@@ -63,64 +63,11 @@ args = parser.parse_args()
 def train(exp_name, agent_task, agent_name):
     # print(f"exp name: {exp_name}, agent task: {agent_task}, agent name: {agent_name}")
     start = timeit.default_timer()
-
-    # ops = {0:("RZ", [0]), 1:("RZ", [1]), 2:("RZ", [2])
-    #     , 3:("CNOT",[0]), 4:("CNOT",[1])
-    #     , 5:("CNOTT", [0])
-    #     , 6:("H", [2])
-    #     , 7:("E", [0,1,2,3])}
-    # ops = {0:("T", [0]), 1:("T", [2])
-    #     , 2:("Ta", [1]), 3:("Ta", [2])
-    #     , 4:("S", [1])
-    #     , 5:("CNOT",[0]), 6:("CNOT",[1])
-    #     , 7:("CNOTT", [0])
-    #     , 8:("H", [2])
-    #     , 9:("E", [0,1,2])}
-    ops = {0:("U3", [0]), 1:("U3", [1]), 2:("U3", [2])
-        , 3:("CU3-single", [0]), 4:("CU3-single", [1])
-        , 5:("CU33", [0])
-        , 6:("CNOT",[0]), 7:("CNOT",[1])
-        , 8:("CNOTT", [0])
-        , 9:("H", [2])
-        , 10:("E", [0,1,2])}
-    # u3cu3cu33
-    ops = {0:("U3", [0]), 1:("U3", [1]), 2:("U3", [2])
-        , 3:("CU3-single", [0]), 4:("CU3-single", [1])
-        , 5:("CU33", [0])
-        , 6:("HCNOT", [1]), 7:("CNOTH", [1])
-        , 8:("E", [0,1,2])}
-    # rzcnot hcnot
-    ops = {0:("RZ", [0])
-        , 1:("rz-CNOT-rz", [0]), 2:("rz-CNOT-rz", [1])
-        , 3:("rz-CNOTT-rz", [0])
-        , 4:("HCNOT", [1]), 5:("CNOTH", [1])
-        , 6:("E", [0,1,2])}
-    # sym rzcnot
-    ops = {0:("RZ", [0])
-        , 1:("rz-CNOT", [0]), 2:("CNOT-rz", [0])
-        , 3:("rz-CNOT", [1]), 4:("CNOT-rz", [1])
-        , 5:("CNOTT", [0])
-        , 6:("HCNOT", [1]), 7:("CNOTH", [1])
-        , 8:("E", [0,1,2])}
-    # sym2 3.22
-    ops = {0:("RZ", [0]), 1:("RZ", [1]), 2:("RZ", [2])
-        , 3:("rz-CNOT", [0]), 4:("CNOT-rz", [0])
-        , 5:("rz-CNOT", [1]), 6:("CNOT-rz", [1])
-        , 7:("CNOTT", [0])
-        , 8:("H", [2])
-        , 9:("E", [0,1,2])}
-    # sym3 
     ops = {0:("RZ", [0]), 1:("RZ", [1]), 2:("RZ", [2])
         , 3:("CNOT", [0]), 4:("CNOT", [1])
         , 5:("CNOTT", [0])
         , 6:("H", [2])
         , 7:("E", [0,1,2])}
-    # simp1
-    # ops = {0:("U3", [0]), 1:("U3", [1]), 2:("U3", [2])
-    #     , 3:("CU3-single", [0]), 4:("CU3-single", [1])
-    #     , 5:("CU33", [0])
-    #     , 6:("H", [2])
-    #     , 7:("E", [0,1,2])}
 
     sphc_struc = []
     # sphc_struc = ["CZ"]
@@ -139,21 +86,10 @@ def train(exp_name, agent_task, agent_name):
 
     # Define quantum network
     qdqn = QDQN(cm=cm
-            , w_input=args.w_input
-            , w_output=args.w_output
             , data_reuploading=args.data_reuploading
             , barrier=args.barrier
             , seed=args.seed)
-
-    qdqn_target = QDQN(cm=cm
-                    , w_input=args.w_input
-                    , w_output=args.w_output
-                    , data_reuploading=args.data_reuploading
-                    , barrier=args.barrier
-                    , seed=args.seed)
-
     dqas4rl = DQAS4RL(qdqn=qdqn,
-                      qdqn_target=qdqn_target,
                       gamma=args.gamma,
                       lr=args.lr,
                       lr_struc=args.lr_struc,
@@ -173,15 +109,11 @@ def train(exp_name, agent_task, agent_name):
                       loss_func=args.loss_func,
                       opt=args.opt,
                       opt_struc=args.opt_struc,
-                      device=args.device,
                       logging=args.logging,
-                      verbose=False,
+
                       early_stop=args.early_stop,
                       structure_batch=args.structure_batch,
-                      debug=args.debug,
-                      exp_name=exp_name,
-                      agent_task=agent_task,
-                      agent_name=agent_name,
+
                       struc_learning=cm.learning_state,
                       total_epochs=args.epochs_train,
                       p_search=args.p_search,
@@ -193,11 +125,7 @@ def train(exp_name, agent_task, agent_name):
         with open(dqas4rl.log_dir + 'config.yaml', 'w') as f:
             yaml.safe_dump(args.__dict__, f, indent=2)
 
-    dqas4rl.learn(num_eval_epochs=args.epochs_test,
-                  log_train_freq=args.log_train_freq,
-                  log_eval_freq=args.log_eval_freq,
-                  log_ckp_freq=args.log_ckp_freq,
-                  log_records_freq=args.log_records_freq)
+    dqas4rl.learn()
 
     stop = timeit.default_timer()
     with open(dqas4rl.log_dir + 'total_time.json', 'w') as f:

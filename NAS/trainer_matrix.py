@@ -40,11 +40,9 @@ class DQAS4RL:
                  opt='Adam',
                  opt_struc='Adam',
                  logging=False,
-
                  sub_batch_size=1,
                  early_stop=195,
                  structure_batch=10,
-
                  total_epochs=5000,
                  struc_learning=True,
                  struc_early_stop=0,

@@ -453,7 +453,6 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
 class QDQN(nn.Module):
     def __init__(self
                  , cm: Circuit_manager
-
                  , data_reuploading=False
                  , barrier=False
                  , seed=1234):
