@@ -6,18 +6,48 @@ import torch.optim as topt
 from torch.utils.tensorboard import SummaryWriter
 import json
 from circuit_ud_matrix import Circuit_manager
+import pennylane as qml
 from scipy.stats import unitary_group
+from torch.autograd import Variable
 
-#TARGET = torch.Tensor(np.array([[1., 0., 0., 0., 0., 0., 0., 0.]
-#                                   , [0., 1., 0., 0., 0., 0., 0., 0.]
-#                                   , [0., 0., 1., 0., 0., 0., 0., 0.]
-#                                   , [0., 0., 0., 1., 0., 0., 0., 0.]
-#                                   , [0., 0., 0., 0., 1., 0., 0., 0.]
-#                                   , [0., 0., 0., 0., 0., 1., 0., 0.]
-#                                   , [0., 0., 0., 0., 0., 0., 0., 1.]
-#                                   , [0., 0., 0., 0., 0., 0., 1., 0.]]))
+TARGET_1 = torch.Tensor(np.array([[1., 0., 0., 0., 0., 0., 0., 0.]
+                                   , [0., 1., 0., 0., 0., 0., 0., 0.]
+                                   , [0., 0., 1., 0., 0., 0., 0., 0.]
+                                   , [0., 0., 0., 1., 0., 0., 0., 0.]
+                                   , [0., 0., 0., 0., 1., 0., 0., 0.]
+                                   , [0., 0., 0., 0., 0., 1., 0., 0.]
+                                   , [0., 0., 0., 0., 0., 0., 0., 1.]
+                                   , [0., 0., 0., 0., 0., 0., 1., 0.]]))
 
-TARGET = torch.eye(16)
+device = qml.device('default.qubit', wires=3)
+params = torch.tensor(np.random.normal(0, np.pi, (3, 2, 3)))
+@qml.qnode(device=device, interface="torch")
+def circuit(params):
+    for j in range(2):
+        for i in range(3):
+            qml.RX(params[i, j, 0], wires=i)
+            qml.CNOT(wires=[0, 2])
+            qml.RY(params[i, j, 1], wires=i)
+    return qml.expval(qml.PauliZ(wires=0))
+TARGET_B = qml.matrix(circuit)(params)
+TARGET = torch.tensor([[ 0.9450+0.0000j, -0.2763+0.0000j,  0.0000+0.0000j,  0.0000+0.0000j,
+                         0.0000-0.1681j,  0.0000+0.0491j,  0.0000+0.0000j,  0.0000+0.0000j],
+                        [ 0.2763+0.0000j,  0.9450+0.0000j,  0.0000+0.0000j,  0.0000+0.0000j,
+                          0.0000-0.0491j,  0.0000-0.1681j,  0.0000+0.0000j,  0.0000+0.0000j],
+                        [ 0.0000+0.0000j,  0.0000+0.0000j,  0.9450+0.0000j, -0.2763+0.0000j,
+                          0.0000+0.0000j,  0.0000+0.0000j,  0.0000-0.1681j,  0.0000+0.0491j],
+                        [ 0.0000+0.0000j,  0.0000+0.0000j,  0.2763+0.0000j,  0.9450+0.0000j,
+                          0.0000+0.0000j,  0.0000+0.0000j,  0.0000-0.0491j,  0.0000-0.1681j],
+                        [ 0.0000+0.0000j,  0.0000+0.0000j,  0.0000-0.1681j,  0.0000+0.0491j,
+                          0.0000+0.0000j,  0.0000+0.0000j,  0.9450+0.0000j, -0.2763+0.0000j],
+                        [ 0.0000+0.0000j,  0.0000+0.0000j,  0.0000-0.0491j,  0.0000-0.1681j,
+                          0.0000+0.0000j,  0.0000+0.0000j,  0.2763+0.0000j,  0.9450+0.0000j],
+                        [ 0.0000-0.1681j,  0.0000+0.0491j,  0.0000+0.0000j,  0.0000+0.0000j,
+                          0.9450+0.0000j, -0.2763+0.0000j,  0.0000+0.0000j,  0.0000+0.0000j],
+                        [ 0.0000-0.0491j,  0.0000-0.1681j,  0.0000+0.0000j,  0.0000+0.0000j,
+                          0.2763+0.0000j,  0.9450+0.0000j,  0.0000+0.0000j,  0.0000+0.0000j]], dtype=torch.complex64)
+
+#TARGET = torch.eye(16)
 LOSS_FACTOR = 1
 class DQAS4RL:
     def __init__(self,
@@ -192,7 +222,7 @@ class DQAS4RL:
 
                 sum_sample_strucs += sub_sum
                 if sub_sum:
-                    sub_loss.backward()
+                    sub_loss.backward(retain_graph=True)
                     ## -- gradient --
                     for name, param in self.qdqn.named_parameters():
 
@@ -243,7 +273,7 @@ class DQAS4RL:
             # -- target --
             expected_qvalues = TARGET
             total_loss = self.matrix_loss_func(predicted, expected_qvalues)
-            total_loss.backward()
+            total_loss.backward(retain_graph=True)
 
             self.opt.step()
 
@@ -269,6 +299,7 @@ class DQAS4RL:
         if epoch % self.update_model == 0:
             loss = self.train_model(prob)
             epoch_loss.append(loss)
+            print('[%d] loss: %.3E' % (epoch + 1, loss))
 
         self.epoch_count += 1
         epoch_avg_loss = np.mean(epoch_loss)

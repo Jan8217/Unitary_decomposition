@@ -9,7 +9,7 @@ from multiprocessing import Pool
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--num_layers", default=1, type=int)# *
+parser.add_argument("--num_layers", default=2, type=int)# *
 parser.add_argument("--gamma", default=0.99, type=float)
 parser.add_argument("--lr", default=0.01, type=float) # 0.01 for test of reducing lr
 parser.add_argument("--batch_size", default=32, type=int)
@@ -37,7 +37,7 @@ parser.add_argument("--seed", default=1234, type=int)
 parser.add_argument("--num_placeholders", default=10, type=int)# *
 parser.add_argument("--opt_struc", default='Adam', type=str)
 parser.add_argument("--structure_batch", default=10, type=int)
-parser.add_argument("--num_qubits", default=4, type=int)# *
+parser.add_argument("--num_qubits", default=3, type=int)# *
 parser.add_argument("--struc_early_stop", default=0, type=int) # *
 parser.add_argument("--learning_step", default=5, type=int) # *
 parser.add_argument("--p_search", default=False, type=bool) # *
@@ -63,11 +63,10 @@ args = parser.parse_args()
 def train(exp_name, agent_task, agent_name):
     # print(f"exp name: {exp_name}, agent task: {agent_task}, agent name: {agent_name}")
     start = timeit.default_timer()
-    ops = {0:("RZ", [0]), 1:("RZ", [1]), 2:("RZ", [2])
-        , 3:("CNOT", [0]), 4:("CNOT", [1])
-        , 5:("CNOTT", [0])
-        , 6:("H", [2])
-        , 7:("E", [0,1,2])}
+    ops = {0:("RX", [0,1,2]), 1:("RY", [0,1,2]), 2:("RZ", [0,1,2])
+        , 3:("CNOT", [0,2])
+        , 4:("H", [2])
+        , 5:("E", [0,1,2])}
 
     sphc_struc = []
     # sphc_struc = ["CZ"]

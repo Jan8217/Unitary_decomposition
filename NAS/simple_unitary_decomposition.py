@@ -24,9 +24,11 @@ def circuit(params):
 
     return qml.expval(qml.PauliZ(wires=0))
     #return qml.probs(wires=0)
-
+unitary_matrix = qml.matrix(circuit)(params)
+print(unitary_matrix)
 def loss_fn(params): # define lost function
     unitary_matrix = qml.matrix(circuit)(params)
+    #print(unitary_matrix)
     #print(qml.draw(circuit(params)))
     expected_qvalues = torch.tensor(unitary_group.rvs(8))
     loss = torch.linalg.norm(unitary_matrix - expected_qvalues) * 1
