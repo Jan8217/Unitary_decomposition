@@ -144,7 +144,7 @@ class DQAS4RL:
 
     def preset_byprob(self, prob):
         return np.array([np.random.choice(np.arange(prob.size()[1])
-                                          , p=np.array(prob[i].detach().cpu().clone().numpy())) for i in range(prob.size()[0])])
+                        , p=np.array(prob[i].detach().cpu().clone().numpy())) for i in range(prob.size()[0])])
 
     def train_model(self, prob):
 
@@ -250,9 +250,7 @@ class DQAS4RL:
         return prob
 
     def epoch_train(self, epoch):
-        epoch_reward = 0
         epoch_loss = []
-        epoch_greedy = 0
 
         prob = self.update_prob()
         # train in batch
@@ -320,7 +318,6 @@ class DQAS4RL:
             records_avg_loss.append(train_report['avg_loss'])
             if self.struc_learning:
                 records_probs.append(train_report['prob'].tolist())
-
 
             if records_avg_loss[-1] <= self.min_loss:
                 output = f"problem solved at epoch {t}, with loss {records_avg_loss[-1]}"

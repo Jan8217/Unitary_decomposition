@@ -2,21 +2,17 @@ import argparse
 import timeit
 from circuit_ud_matrix import QDQN, Circuit_manager
 from trainer_matrix import DQAS4RL
-from multiprocessing import Pool
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num_layers", default=2, type=int)
-parser.add_argument("--num_placeholders", default=15, type=int)
+parser.add_argument("--num_placeholders", default=20, type=int)
 parser.add_argument("--num_qubits", default=3, type=int)
 args = parser.parse_args()
 
 start = timeit.default_timer()
-ops = {0:("RZ", [0]), 1:("RZ", [1]), 2:("RZ", [2])
-        , 3:("CNOT", [0]), 4:("CNOT", [1])
-        , 5:("CNOTT", [0])
-        , 6:("H", [2])
-        , 7:("E", [0,1,2])}
-
+ops = {0:("RX",[0]), 1:("RY",[2]), 2:("RZ",[1])
+         , 3:("CNOT",[0,1]), 4:("CNOT",[1,2])
+         , 5:("CNOTT", [0]), 6:("H", [0,2]), 7:("E", [0,1,2])}
 sphc_struc = []
 sphc_ranges = [[*range(3)] for _ in range(len(sphc_struc))]
 
@@ -53,7 +49,7 @@ dqas4rl = DQAS4RL(qdqn=qdqn,
                   early_stop=195,
                   structure_batch=10,
                   struc_learning=cm.learning_state,
-                  total_epochs=1000,
+                  total_epochs=10000,
                   struc_early_stop=0)
 dqas4rl.learn()
 stop = timeit.default_timer()
