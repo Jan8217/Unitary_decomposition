@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--num_layers", default=2, type=int)# *
 parser.add_argument("--gamma", default=0.99, type=float)
-parser.add_argument("--lr", default=0.01, type=float) # 0.01 for test of reducing lr
+parser.add_argument("--lr", default=0.001, type=float) # 0.01 for test of reducing lr
 parser.add_argument("--batch_size", default=32, type=int)
 parser.add_argument("--greedy", default=1., type=float)
 parser.add_argument("--greedy_decay", default=0.99, type=int)
@@ -60,84 +60,57 @@ parser.add_argument("--log_records_freq", default=50, type=int)
 
 args = parser.parse_args()
 
-def train(exp_name, agent_task, agent_name):
+
     # print(f"exp name: {exp_name}, agent task: {agent_task}, agent name: {agent_name}")
-    start = timeit.default_timer()
-    ops = {0:("RX", [0,1,2]), 1:("RY", [0,1,2]), 2:("RZ", [0,1,2])
+start = timeit.default_timer()
+ops = {0:("RX", [0,1,2]), 1:("RY", [0,1,2]), 2:("RZ", [0,1,2])
         , 3:("CNOT", [0,2])
         , 4:("H", [2])
         , 5:("E", [0,1,2])}
 
-    sphc_struc = []
+sphc_struc = []
     # sphc_struc = ["CZ"]
     # sphc_struc = ["RY", "RZ", "CNOT"]
-    sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
+sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
 
-    cm = Circuit_manager(sphc_struc=sphc_struc
-                        , sphc_ranges=sphc_ranges
-                        , num_qubits=args.num_qubits
-                        , num_placeholders=args.num_placeholders
-                        , num_layers=args.num_layers
-                        , ops=ops
-                        , noisy=args.noisy
-                        , learning_step=args.learning_step
-                        )
+cm = Circuit_manager(sphc_struc=sphc_struc
+                    , sphc_ranges=sphc_ranges
+                    , num_qubits=args.num_qubits
+                    , num_placeholders=args.num_placeholders
+                    , num_layers=args.num_layers
+                    , ops=ops
+                    , noisy=args.noisy
+                    , learning_step=args.learning_step
+                    )
 
-    # Define quantum network
-    qdqn = QDQN(cm=cm
-            , data_reuploading=args.data_reuploading
-            , barrier=args.barrier
-            , seed=args.seed)
-    dqas4rl = DQAS4RL(qdqn=qdqn,
-                      gamma=args.gamma,
-                      lr=args.lr,
-                      lr_struc=args.lr_struc,
-                      batch_size=args.batch_size,
-                      greedy=args.greedy,
-                      greedy_decay=args.greedy_decay,
-                      greedy_min=args.greedy_min,
-                      update_model=args.update_model,
-                      update_targ_model=args.update_targ_model,
-                      memory_size=args.memory_size,
-                      max_steps=args.max_steps,
-                      seed=args.seed,
-                      cm=cm,
-                      prob_max = 0,
-                      lr_in=args.lr_input,
-                      lr_out=args.lr_output,
-                      loss_func=args.loss_func,
-                      opt=args.opt,
-                      opt_struc=args.opt_struc,
-                      logging=args.logging,
+# Define quantum network
+qdqn = QDQN(cm=cm
+        , data_reuploading=args.data_reuploading
+        , barrier=args.barrier
+        , seed=args.seed)
+dqas4rl = DQAS4RL(qdqn=qdqn,
+                  lr=args.lr,
+                  lr_struc=args.lr_struc,
+                  batch_size=args.batch_size,
+                  update_model=args.update_model,
+                  update_targ_model=args.update_targ_model,
+                  memory_size=args.memory_size,
+                  max_steps=args.max_steps,
+                  seed=args.seed,
+                  cm=cm,
+                  prob_max = 0,
+                  loss_func=args.loss_func,
+                  opt=args.opt,
+                  opt_struc=args.opt_struc,
+                  logging=args.logging,
 
-                      early_stop=args.early_stop,
-                      structure_batch=args.structure_batch,
+                  early_stop=args.early_stop,
+                  structure_batch=args.structure_batch,
+                  struc_learning=cm.learning_state,
+                  total_epochs=args.epochs_train,
+                  struc_early_stop=args.struc_early_stop)
 
-                      struc_learning=cm.learning_state,
-                      total_epochs=args.epochs_train,
-                      p_search=args.p_search,
-                      p_search_lowerbound=args.p_search_lowerbound,
-                      p_search_period=args.p_search_period,
-                      struc_early_stop=args.struc_early_stop)
+dqas4rl.learn()
 
-    if args.logging:
-        with open(dqas4rl.log_dir + 'config.yaml', 'w') as f:
-            yaml.safe_dump(args.__dict__, f, indent=2)
-
-    dqas4rl.learn()
-
-    stop = timeit.default_timer()
-    with open(dqas4rl.log_dir + 'total_time.json', 'w') as f:
-        json.dump(f'total time cost: {stop-start}', f,  indent=4)
-    print(f'total time cost: {stop-start}')
-
-def main():
-    exp_name=args.exp_name
-    agent_task=args.agent_task
-    names = ['a0', 'a1', 'a2', 'a3', 'a4']
-    # with Pool() as pool:
-    #     pool.starmap(train, [(exp_name, agent_task, a) for a in names])
-    train(exp_name, agent_task, '0221-matrix-sym3-ep5000-lstep12-lrst001')
-
-if __name__ == '__main__':
-    main()
+stop = timeit.default_timer()
+print(f'total time cost: {stop-start}')

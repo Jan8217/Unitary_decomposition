@@ -52,13 +52,9 @@ LOSS_FACTOR = 1
 class DQAS4RL:
     def __init__(self,
                  qdqn,
-                 gamma,
                  lr,
                  lr_struc,
                  batch_size,
-                 greedy,
-                 greedy_decay,
-                 greedy_min,
                  update_model,
                  update_targ_model,
                  memory_size,
@@ -66,8 +62,6 @@ class DQAS4RL:
                  seed,
                  cm: Circuit_manager,
                  prob_max=0.5,
-                 lr_in=None,
-                 lr_out=None,
                  loss_func='MSE',
                  opt='Adam',
                  opt_struc='Adam',
@@ -78,28 +72,17 @@ class DQAS4RL:
                  total_epochs=5000,
                  struc_learning=True,
                  struc_early_stop=0,
-                 p_search=False,
-                 p_search_lowerbound=2,
-                 p_search_period=0,
                  min_loss=0.1):
 
         self.qdqn = qdqn
         self.cm = cm
-
-        self.gamma = gamma
         self.lr = lr
         self.lr_struc = lr_struc
-        self.lr_in = lr_in
-        self.lr_out = lr_out
 
         self.memory_size = memory_size
         self.batch_size = batch_size
         self.max_steps = max_steps
         self.seed = seed
-
-        self.greedy = greedy
-        self.greedy_decay = greedy_decay
-        self.greedy_min = greedy_min
 
         self.update_model = update_model
         self.update_targ_model = update_targ_model
@@ -117,17 +100,10 @@ class DQAS4RL:
         self.struc_learning = struc_learning
         self.total_epochs = total_epochs
 
-        self.p_search = p_search
-        self.p_search_lowerbound = p_search_lowerbound
-        self.p_search_period = p_search_period if p_search_period else int(
-            self.struc_early_stop / (2 * self.cm.num_ops))
-
         self.device = 'cpu'
         self.logging = logging
-
         self.sub_batch_size = sub_batch_size
         self.structure_batch = structure_batch
-        self.best_structs = []
         self.dtype = torch.float32  # TODO think this dtype
 
         self.config()
@@ -316,8 +292,6 @@ class DQAS4RL:
                     return {
                         'steps': epoch,
                         'avg_loss': epoch_avg_loss,
-                        'reward': epoch_reward,
-                        'greedy': epoch_greedy,
                         'prob': prob.detach().cpu().clone().numpy()
                     }
                 else:
@@ -335,58 +309,34 @@ class DQAS4RL:
             return {
                 'steps': epoch,
                 'avg_loss': epoch_avg_loss,
-                'reward': epoch_reward,
-                'greedy': epoch_greedy,
                 'prob': prob.detach().cpu().clone().numpy(),
-               # 'pridected':
             }
         else:
             return {
                 'steps': epoch,
                 'avg_loss': epoch_avg_loss,
-                'reward': epoch_reward,
-                'greedy': epoch_greedy,
-                #'pridected':
             }
 
     def learn(self):
 
         postfix_stats = {}
-        records_reward = []
         records_steps = []
         records_avg_loss = []
-        records_greedy = []
         records_probs = []
-        avg_rewards = []
-        norm_rewards = []
         self.push_json(self.cm.ops, self.log_dir + 'operation_pool')
 
         for t in range(self.total_epochs):
             # train dqn
             train_report = self.epoch_train(t)
-            #print(train_report)
-            #print(type(train_report))
             postfix_stats['train/epoch_loss'] = train_report['avg_loss']
             postfix_stats['train/epochs'] = train_report['steps']
             postfix_stats['strucl'] = self.struc_learning
 
-            records_reward.append(train_report['reward'])
             records_steps.append(train_report['steps'])
             records_avg_loss.append(train_report['avg_loss'])
-            records_greedy.append(train_report['greedy'])
             if self.struc_learning:
                 records_probs.append(train_report['prob'].tolist())
 
-            avg_rewards.append(np.mean(records_reward[-100:]))
-
-            mean_reward = np.mean(records_reward)
-            std_reward = np.std(records_reward)
-
-            if std_reward != 0:
-                norm_reward = (records_reward[-1] - mean_reward) / std_reward
-                norm_rewards.append(norm_reward)
-            else:
-                norm_rewards.append(0)
 
             if records_avg_loss[-1] <= self.min_loss:
                 output = f"problem solved at epoch {t}, with loss {records_avg_loss[-1]}"
