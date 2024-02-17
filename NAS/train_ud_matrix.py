@@ -14,7 +14,7 @@ ops = {0:("RX",[0]), 1:("RY",[2]), 2:("RZ",[1])
          , 3:("CNOT",[0,1]), 4:("CNOT",[1,2])
          , 5:("CNOTT", [0]), 6:("H", [0,2]), 7:("E", [0,1,2])}
 sphc_struc = []
-sphc_ranges = [[*range(3)] for _ in range(len(sphc_struc))]
+sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
 
 cm = Circuit_manager(sphc_struc=sphc_struc
                     , sphc_ranges=sphc_ranges

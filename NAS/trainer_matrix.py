@@ -9,28 +9,17 @@ from circuit_ud_matrix import Circuit_manager
 import pennylane as qml
 from scipy.stats import unitary_group
 from torch.autograd import Variable
-'''
-TARGET_1 = torch.Tensor(np.array([[1., 0., 0., 0., 0., 0., 0., 0.]
-                                   , [0., 1., 0., 0., 0., 0., 0., 0.]
-                                   , [0., 0., 1., 0., 0., 0., 0., 0.]
-                                   , [0., 0., 0., 1., 0., 0., 0., 0.]
-                                   , [0., 0., 0., 0., 1., 0., 0., 0.]
-                                   , [0., 0., 0., 0., 0., 1., 0., 0.]
-                                   , [0., 0., 0., 0., 0., 0., 0., 1.]
-                                   , [0., 0., 0., 0., 0., 0., 1., 0.]]))
 
-device = qml.device('default.qubit', wires=3)
-params = torch.tensor(np.random.normal(0, np.pi, (3, 2, 3)))
-@qml.qnode(device=device, interface="torch")
-def circuit(params):
-    for j in range(2):
-        for i in range(3):
-            qml.RX(params[i, j, 0], wires=i)
-            qml.CNOT(wires=[0, 2])
-            qml.RY(params[i, j, 1], wires=i)
-    return qml.expval(qml.PauliZ(wires=0))
-TARGET_B = qml.matrix(circuit)(params)
-'''
+dev = qml.device('default.qubit', wires=3)
+
+
+U = unitary_group.rvs(8)
+
+
+@qml.qnode(dev, interface='torch')
+def target_state():
+    qml.QubitUnitary(U, wires=[0, 1, 2])
+    return qml.state()
 TARGET = torch.eye(8)
 LOSS_FACTOR = 1
 class DQAS4RL:
@@ -62,15 +51,12 @@ class DQAS4RL:
         self.cm = cm
         self.lr = lr
         self.lr_struc = lr_struc
-
         self.memory_size = memory_size
         self.batch_size = batch_size
         self.max_steps = max_steps
         self.seed = seed
-
         self.update_model = update_model
         self.update_targ_model = update_targ_model
-
         self.loss_func_name = loss_func
         self.opt_name = opt
         self.opt_name_struc = opt_struc
@@ -78,18 +64,15 @@ class DQAS4RL:
         self.avcost = 0
         self.early_stop = early_stop
         self.min_loss = min_loss
-
         self.struc_early_stop = struc_early_stop if struc_early_stop else int(total_epochs / (2 * (int(cm.num_placeholders / cm.learning_step))))
         self.struc_early_step = self.struc_early_stop
         self.struc_learning = struc_learning
         self.total_epochs = total_epochs
-
         self.device = 'cpu'
         self.logging = logging
         self.sub_batch_size = sub_batch_size
         self.structure_batch = structure_batch
         self.dtype = torch.float32  # TODO think this dtype
-
         self.config()
 
     def config(self):
@@ -136,7 +119,8 @@ class DQAS4RL:
         self.epoch_count = 0
 
     def matrix_loss_func(self, a, b):
-        return torch.linalg.norm(b - a)
+        #return torch.linalg.norm(b - a)
+        return 1 - qml.math.fidelity(b, a, check_state= True)
 
     def push_json(self, out, path):
         with open(path, 'w') as f:
@@ -145,7 +129,6 @@ class DQAS4RL:
     def preset_byprob(self, prob):
         return np.array([np.random.choice(np.arange(prob.size()[1])
                         , p=np.array(prob[i].detach().cpu().clone().numpy())) for i in range(prob.size()[0])])
-
     def train_model(self, prob):
 
         self.qdqn.train()
@@ -171,9 +154,10 @@ class DQAS4RL:
                 # -- predicted --
                 states = torch.Tensor([0.] * self.cm.num_qubits)
                 predicted = self.qdqn(states)
-
+                #output_state = circuit(params)
                 # -- target --
-                expected_qvalues = TARGET  # TODO original for ccnot
+                #expected_qvalues = TARGET
+                expected_qvalues = target_state()
 
                 # -- loss --
                 sub_loss = self.matrix_loss_func(predicted, expected_qvalues) * LOSS_FACTOR
@@ -232,13 +216,12 @@ class DQAS4RL:
             predicted = self.qdqn(states)
 
             # -- target --
-            expected_qvalues = TARGET
+            #expected_qvalues = TARGET
+            expected_qvalues = target_state()
             total_loss = self.matrix_loss_func(predicted, expected_qvalues)
-            self.opt.zero_grad()
-            total_loss.backward(retain_graph=True)
+            #total_loss.backward(retain_graph=True)
 
             self.opt.step()
-
         return total_loss.item()
 
     def update_prob(self):
@@ -253,7 +236,6 @@ class DQAS4RL:
 
     def epoch_train(self, epoch):
         epoch_loss = []
-
         prob = self.update_prob()
         # train in batch
         if epoch % self.update_model == 0:
@@ -302,7 +284,6 @@ class DQAS4RL:
             }
 
     def learn(self):
-
         postfix_stats = {}
         records_steps = []
         records_avg_loss = []
