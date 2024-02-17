@@ -464,8 +464,8 @@ class QDQN(nn.Module):
 
     def forward(self, inputs):
 
-        return qml.matrix(self.q_layers.qnode)(inputs, self.q_layers.theta_weights, self.q_layers.phi_weights,
-                                             self.q_layers.delta_weights)  # TODO:to.(self.device))
+        qml.matrix(self.q_layers.qnode)(inputs, self.q_layers.theta_weights, self.q_layers.phi_weights,
+                                             self.q_layers.delta_weights)  # TODO:to.(self.device) )
 
     def set_circuit_struc(self, gates):
         self.cm.set_current_sampled_struc(gates)

@@ -56,7 +56,7 @@ class DQAS4RL:
                  total_epochs=5000,
                  struc_learning=True,
                  struc_early_stop=0,
-                 min_loss=0.1):
+                 min_loss=0.0001):
 
         self.qdqn = qdqn
         self.cm = cm
@@ -220,12 +220,13 @@ class DQAS4RL:
                 grad_batch_struc = torch.mean(torch.stack(deri_struc), dim=0).type(self.dtype).to(self.device)
                 self.var_struc.grad = grad_batch_struc
 
+
             self.opt_struc.step()
             # self.opt_beta.step()
             #predicted_for_show()
         else:
             self.qdqn.train()
-            self.opt.zero_grad()
+            #self.opt.zero_grad()
             # -- predicted --
             states = torch.Tensor([.0] * self.cm.num_qubits)
             predicted = self.qdqn(states)
@@ -233,6 +234,7 @@ class DQAS4RL:
             # -- target --
             expected_qvalues = TARGET
             total_loss = self.matrix_loss_func(predicted, expected_qvalues)
+            self.opt.zero_grad()
             total_loss.backward(retain_graph=True)
 
             self.opt.step()
@@ -257,7 +259,7 @@ class DQAS4RL:
         if epoch % self.update_model == 0:
             loss = self.train_model(prob)
             epoch_loss.append(loss)
-            print('[%d] loss: %.3E' % (epoch + 1, loss))
+            print('[%d] loss: %.3f' % (epoch + 1, loss))
 
         self.epoch_count += 1
         epoch_avg_loss = np.mean(epoch_loss)
