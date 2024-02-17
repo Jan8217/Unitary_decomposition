@@ -15,7 +15,6 @@ ops = {0:("RX",[0]), 1:("RY",[2]), 2:("RZ",[1])
          , 5:("CNOTT", [0]), 6:("H", [0,2]), 7:("E", [0,1,2])}
 sphc_struc = []
 sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
-
 cm = Circuit_manager(sphc_struc=sphc_struc
                     , sphc_ranges=sphc_ranges
                     , num_qubits=args.num_qubits
@@ -45,7 +44,6 @@ dqas4rl = DQAS4RL(qdqn=qdqn,
                   opt='Adam',
                   opt_struc='Adam',
                   logging=True,
-
                   early_stop=195,
                   structure_batch=10,
                   struc_learning=cm.learning_state,
