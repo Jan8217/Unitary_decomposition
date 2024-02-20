@@ -101,7 +101,6 @@ class Circuit_manager():
         self.remaining_learning_places = self.remaining_learning_places[self._LEARNING_STEP:]
         self._current_num_placeholders = len(self.current_learning_places)
 
-
         if self.current_num_placeholders > 0:
             return False
         else:
@@ -121,11 +120,6 @@ class Circuit_manager():
                 self.ops[j.item()][0] for j in best_gate_idxs)
             self.learned_layer_ranges[self.current_learning_places[i]] = [self.ops[j.item()][1] for j in best_gate_idxs]
             self.indexs[self.current_learning_places[i]] = best_gate_idxs[0].item()
-
-
-    def collect_learned_struc(self, prob):
-        self.update_struc(prob)
-        return self.get_learned_layer_struc()
 
     def _init_layer_struc_parser(self, num_placeholders, sphc_struc, sphc_ranges, num_qubits):
         if num_placeholders > 0:
@@ -248,7 +242,6 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
         dev = qml.device("default.mixed", wires=cm.num_qubits)
     else:
         dev = qml.device("default.qubit", wires=cm.num_qubits)
-    # dev = qml.device("cirq.simulator", wires=num_qubits)
 
     # U3 weights
     shapes = {
@@ -256,41 +249,29 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
         "phi_weights": cm.get_weights_shape(),
         "delta_weights": cm.get_weights_shape(),
     }
-
-
-    # TODO: for frozen lake
-    def measure_block(num_qs):  # TODO: fit for other unitary; currently used for CCNOT
-        # return [qml.expval(qml.PauliZ(i)) for i in range(num_qs)]
-        return [qml.expval(qml.PauliZ(0) @ qml.PauliZ(1) @ qml.PauliZ(2))]
-
-    def entanglement(rg):
-        for i in rg:
-            qml.CNOT(wires=[i, (i + 1) % len(rg)])
-
-    def entanglement2(rg):  # TODO: used for set cnot on "one" specific position
-        for i in rg:
-            qml.CNOT(wires=[i, (i + 1) % cm.num_qubits])
+    def measure_block(num_qs):
+        measurement = qml.PauliZ(wires=0)
+        for i in range(1, num_qs):
+            measurement @= qml.PauliZ(wires=i)
+        return [qml.expval(measurement)]
 
     def encoding_block(inputs, num_qubits):
-        qml.Hadamard(wires=2)
+        for i in range(num_qubits):
+            qml.Hadamard(wires=i)
 
     def layer(theta_weight, phi_weight, delta_weight, generators, generators_range, indexs):
-        # p: 0, op: U3, pr: [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]], gnr: ['U3', 'RY', 'CU3', 'RZ', 'U3', 'CNOT'], op range: [0, 1, 2, 3]
         for p, op in enumerate(generators):
-            # if p%len(generators)==0:
-            #     print(f"p: {p}, op: {op}, pr: {generators_range}, gnr: {generators}, op range: {generators_range[p]}, index p :{indexs[p]}") #
             op_range = generators_range[p]
             # -- u3 & cu3 gate --
             if op == "U3":
                 for i in op_range:
-                    qml.U3(theta=theta_weight[i, p, indexs[p]] * MULTIGATEFACTOR  # indexs: [0, 1, 0, 2, 2, 2]
+                    qml.U3(theta=theta_weight[i, p, indexs[p]] * MULTIGATEFACTOR
                            , phi=phi_weight[i, p, indexs[p]] * MULTIGATEFACTOR
                            , delta=delta_weight[i, p, indexs[p]] * MULTIGATEFACTOR
                            , wires=i)
             elif op == "CU3":  # ring connection
                 assert (len(op_range) > 1)
                 for i in op_range:
-                    # if i + 1 in op_range:
                     def CU3(t_w, p_w, d_w, target):
                         qml.U3(theta=t_w[i, p, indexs[p]] * MULTIGATEFACTOR
                                , phi=p_w[i, p, indexs[p]] * MULTIGATEFACTOR
@@ -300,7 +281,6 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
                     qml.ctrl(CU3, control=i)(theta_weight, phi_weight, delta_weight, (i + 1) % len(op_range))
             elif op == "CU3-single":
                 for i in op_range:
-                    # if i + 1 in op_range:
                     def CU3(t_w, p_w, d_w, target):
                         qml.U3(theta=t_w[i, p, indexs[p]] * MULTIGATEFACTOR
                                , phi=p_w[i, p, indexs[p]] * MULTIGATEFACTOR
@@ -310,7 +290,6 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
                     qml.ctrl(CU3, control=i)(theta_weight, phi_weight, delta_weight, (i + 1) % cm.num_qubits)
             elif op == "CU33":
                 for i in op_range:
-                    # if i + 1 in op_range:
                     def CU3(t_w, p_w, d_w, target):
                         qml.U3(theta=t_w[i, p, indexs[p]] * MULTIGATEFACTOR
                                , phi=p_w[i, p, indexs[p]] * MULTIGATEFACTOR
@@ -329,15 +308,11 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
                 for i in op_range:
                     qml.RY(theta_weight[i, p, indexs[p]] * SINGLEGATEFACTOR, wires=i)
             elif op == "RZ":
-                # print(f"RZ: {p}, {indexs[p]}")
                 for i in op_range:
                     qml.RZ(theta_weight[i, p, indexs[p]] * SINGLEGATEFACTOR, wires=i)
             elif op == "X":
                 for i in op_range:
                     qml.X(wires=i)
-            elif op == "SX":
-                for i in op_range:
-                    qml.SX(wires=i)
             elif op == "T":
                 for i in op_range:
                     qml.T(wires=i)
@@ -347,42 +322,13 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
             elif op == "H":
                 for i in op_range:
                     qml.Hadamard(wires=i)
-            elif op == "SQH":
-                unitary = (1. / 4 + 1.j / 4) * np.array([-1.j * (np.sqrt(2) + 2.j), -1.j * np.sqrt(2)],
-                                                        [-1.j * np.sqrt(2), 1.j * (np.sqrt(2) - 2.j)])
-                for i in op_range:
-                    qml.QubitUnitary(unitary, wires=[i])
-            elif op == "S":
-                for i in op_range:
-                    qml.S(wires=i)
             elif op == "E":
                 for i in op_range:
                     qml.Identity(wires=i)
             # -- two qubits gate --
-            elif op == "SWAP":
-                qml.SWAP(wires=op_range)
-            elif op == "SQSWAP":
-                unitary = np.array([1., 0., 0., 0.],
-                                   [0., (1. / 2 + 1.j / 2), (1. / 2 - 1.j / 2), 0.],
-                                   [0., (1. / 2 - 1.j / 2), (1. / 2 + 1.j / 2), 0.],
-                                   [0., 0., 0., 1.], )
-                qml.QubitUnitary(unitary, wires=op_range)
-            elif op == "CZ":
-                assert (len(op_range) > 1)
-                for i in op_range:
-                    if i + 1 in op_range:
-                        qml.CZ(wires=[i, (i + 1) % len(op_range)])
-            elif op == "CRZ":
-                assert (len(op_range) > 1)
-                for i in op_range:
-                    if i + 1 in op_range:
-                        qml.CRZ(theta_weight[(i + 1) % len(op_range), p, indexs[p]], wires=[i, (i + 1) % len(op_range)])
             elif op == "CNOT":
-
-                entanglement2(op_range)
-            elif op == "CNOTT":
                 for i in op_range:
-                    qml.CNOT(wires=[i, (i + 2) % cm.num_qubits])
+                    qml.CNOT(wires=[i, (i + 1) % cm.num_qubits])
             elif op == "rz-CNOT-rz":
                 i = op_range[0]
                 qml.RZ(theta_weight[i + 1, p, indexs[p]] * SINGLEGATEFACTOR, wires=i + 1)
@@ -406,28 +352,17 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
                 qml.RZ(theta_weight[i + 2, p, indexs[p]] * SINGLEGATEFACTOR, wires=i + 2)
                 qml.CNOT(wires=[i, (i + 2) % cm.num_qubits])
                 qml.RZ(phi_weight[i + 2, p, indexs[p]] * SINGLEGATEFACTOR, wires=i + 2)
-            elif op == "HCNOT":
-                i = op_range[0]
-                qml.Hadamard(wires=i + 1)
-                qml.CNOT(wires=[i, (i + 1) % cm.num_qubits])
-            elif op == "CNOTH":
-                i = op_range[0]
-                qml.CNOT(wires=[i, (i + 1) % cm.num_qubits])
-                qml.Hadamard(wires=i + 1)
             elif op == "ZZ":
                 assert (len(op_range) > 1)
                 for i in op_range:
                     if i + 1 in op_range:
                         qml.IsingZZ(theta_weight[(i + 1) % len(op_range), p, indexs[p]],
                                     wires=[i, (i + 1) % len(op_range)])
-
             elif op == "QFT":
                 assert (len(op_range) > 1)
                 qml.QFT(wires=op_range)
 
     def make_circuit(inputs, theta_weights, phi_weights, delta_weights):
-
-
         gns, gns_ranges, indexs = cm.get_layer_generator(gates=cm.get_current_sampled_struc())
 
         for l in range(cm.num_layers):
@@ -442,14 +377,9 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
             for i in range(cm.num_qubits):
                 qml.BitFlip(0.01, wires=i)
         return measure_block(cm.num_qubits)
-
     circuit = qml.QNode(make_circuit, dev, interface='torch')
-
     model = qml.qnn.TorchLayer(circuit, shapes)
-
     return model
-
-
 class QDQN(nn.Module):
     def __init__(self
                  , cm: Circuit_manager
@@ -464,9 +394,8 @@ class QDQN(nn.Module):
 
     def forward(self, inputs):
 
-        self.q_layers.qnode(inputs, self.q_layers.theta_weights, self.q_layers.phi_weights,
-                                             self.q_layers.delta_weights)  # TODO:to.(self.device) )
-        return qml.state()
+        return qml.matrix(self.q_layers.qnode)(inputs, self.q_layers.theta_weights, self.q_layers.phi_weights, self.q_layers.delta_weights)
+        #return qml.state()
 
     def set_circuit_struc(self, gates):
         self.cm.set_current_sampled_struc(gates)

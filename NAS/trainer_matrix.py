@@ -119,8 +119,8 @@ class DQAS4RL:
         self.epoch_count = 0
 
     def matrix_loss_func(self, a, b):
-        #return torch.linalg.norm(b - a)
-        return 1 - qml.math.fidelity(b, a, check_state= True)
+        return torch.linalg.norm(b - a)
+        #return 1 - qml.math.fidelity(b, a, check_state= True)
 
     def push_json(self, out, path):
         with open(path, 'w') as f:
@@ -156,8 +156,8 @@ class DQAS4RL:
                 predicted = self.qdqn(states)
                 #output_state = circuit(params)
                 # -- target --
-                #expected_qvalues = TARGET
-                expected_qvalues = target_state()
+                expected_qvalues = TARGET
+                #expected_qvalues = target_state()
 
                 # -- loss --
                 sub_loss = self.matrix_loss_func(predicted, expected_qvalues) * LOSS_FACTOR
@@ -216,8 +216,8 @@ class DQAS4RL:
             predicted = self.qdqn(states)
 
             # -- target --
-            #expected_qvalues = TARGET
-            expected_qvalues = target_state()
+            expected_qvalues = TARGET
+            #expected_qvalues = target_state()
             total_loss = self.matrix_loss_func(predicted, expected_qvalues)
             #total_loss.backward(retain_graph=True)
 
