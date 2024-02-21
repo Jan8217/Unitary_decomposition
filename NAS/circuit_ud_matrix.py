@@ -235,7 +235,6 @@ class Circuit_manager():
     def learning_step(self):
         return self._LEARNING_STEP
 
-
 def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep it outside DQN
     # dev = qml.device('qiskit.aer', wires=num_qubits)
     if cm.noisy:
