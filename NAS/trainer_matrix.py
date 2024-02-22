@@ -216,8 +216,8 @@ class DQAS4RL:
             predicted = self.qdqn(states)
 
             # -- target --
-            expected_qvalues = TARGET
-            #expected_qvalues = target_state()
+            #expected_qvalues = TARGET
+            expected_qvalues = target_state()
             total_loss = self.matrix_loss_func(predicted, expected_qvalues)
             #total_loss.backward(retain_graph=True)
 
