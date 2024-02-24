@@ -106,12 +106,6 @@ class unitary_optimizer():
 
 		# loop backwards in forward pass (start from second to last matrix being multiplied)
 		for i, back_matrix_i in enumerate(self.backward_pass):
-			# print(i)
-			# print('back_matrix')
-			# print(back_matrix_i)
-			# print('forward_matrix')
-			# print(forward_matrix)
-
 			# create grid of times
 			grid_times = self.times[i] + torch.linspace(-1*grid_range,grid_range,steps=n_grid, device = device, dtype = dtype)
 			grid_times = torch.reshape(grid_times, [n_grid,1])
@@ -136,11 +130,6 @@ class unitary_optimizer():
 
 			# update forward_matrix
 			forward_matrix = torch.matmul(optim_exp ,forward_matrix)
-			# print(self.output)
-
-			# print(self.full_loss_calc())
-		
-		# return new_times
 
 	def grid_loss_search(self, matrix, times, appending = True, back_matrix = None, forward_matrix = None):
 		'''performs matrix multiplications on matrix and determines which has lowest loss
@@ -157,11 +146,6 @@ class unitary_optimizer():
 
 		loss_values = batch_frobenius_norm(new_outputs, self.target.expand(new_outputs.size()))
 		min_ind = torch.argmin(loss_values)
-		# print(loss_values)
-		# print(loss_values[min_ind])
-		# print(matrix[min_ind])
-
-		# print(forward_matrix)
 		if appending:
 			return times[min_ind], new_outputs[min_ind]
 		else:
@@ -215,7 +199,6 @@ class unitary_optimizer():
 										 grid_range = propogate_grid_range, 
 										 appending = False)
 
-
 			if not self.manual_grad_calc:
 				self.optimizer.zero_grad()
 			
@@ -250,8 +233,6 @@ class unitary_optimizer():
 			if track_times:
 				self.time_tracker.append(self.times.clone().detach())
 
-
-
 		if save_results:
 			epoch_list.append(epoch_i+1)
 			loss_tracking.append(loss.data.cpu().numpy())
@@ -274,7 +255,6 @@ class unitary_optimizer():
 			currentDT = datetime.datetime.now()
 			df.to_csv(save_csv+str(currentDT)+'.csv')
 			print(df)
-			
 
 	def manual_gradients(self):
 		''' manaully calculates gradients using backwards pass
@@ -290,7 +270,6 @@ class unitary_optimizer():
 		grad_mats = torch.matmul(torch.transpose(self.target, 1, 2).expand(grad_mats.size()), grad_mats)
 		grads = -1*torch.sum(torch.diagonal(grad_mats, dim1 = 1, dim2 = 2), 1)
 		return grads.reshape([len(grads),1])
-
 
 	def ordered_matrix_multiply(self, matrices_in, multiply_forward = True):
 		matrices = torch.clone(matrices_in)
@@ -314,56 +293,6 @@ class unitary_optimizer():
 				return None 					# no return if backwards pass
 
 		return matrices[-1].view([1] + list(matrices.size()[1:]))
-
-
-	def get_loss_grid(self,
-					  direction1 = None, direction2 = None, start_point = None, 
-					  n_grid_steps = 5, grid_size = 0.25):
-		'''returns 2d grid of loss values
-		useful for plotting the loss function as a contour
-		'''
-
-		if direction1 is None:
-			direction1 = torch.randn(*self.times.size(), 
-				device = device, dtype = dtype)
-
-		if direction2 is None:
-			direction2 = torch.randn(*self.times.size(), 
-				device = device, dtype = dtype)
-
-		if start_point is None:
-			start_point = self.times.clone().detach()
-
-
-		# normalizing directions
-		l1 = torch.sqrt(torch.sum( direction1**2 ))
-		l2 = torch.sqrt(torch.sum( direction2**2 ))
-		d1 = direction1 / l1
-		d2 = direction2 / l2
-
-		# get points in grid
-		x_points = torch.linspace(-1*grid_size, grid_size, steps = n_grid_steps )
-		y_points = torch.linspace(-1*grid_size, grid_size, steps = n_grid_steps )
-
-		# initialize essentials
-		x_vals = []
-		y_vals = []
-		loss_vals = []
-		temp_store_times = self.times.clone().detach()
-
-		# loop through and calculate loss
-		for x in x_points:
-			print(x)
-			for y in y_points:
-				self.times = start_point + x*d1 + y*d2
-				loss = self.full_loss_calc()
-				x_vals.append(float(x.data.cpu()))
-				y_vals.append(float(y.data.cpu()))
-				loss_vals.append(float(loss.data.cpu()))
-
-		self.times = temp_store_times
-		return x_vals, y_vals, loss_vals
-
 
 def batch_matrix_multiply(matrices):
 	n_mats = matrices.size()[0]
