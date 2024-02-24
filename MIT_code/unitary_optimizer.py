@@ -257,6 +257,7 @@ class unitary_optimizer():
 			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary-decomposition/MIT_code/csv_files_for_matrix'
 			df.to_csv(save_csv+str(currentDT)+'.csv')
 			print(df)
+			print()
 
 	def manual_gradients(self):
 		''' manaully calculates gradients using backwards pass
