@@ -254,7 +254,7 @@ class unitary_optimizer():
 
 			df = pd.DataFrame(data=pd_cols)
 			currentDT = datetime.datetime.now()
-			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary-decomposition/MIT_code/csv_files_for_matrix'
+			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary-decomposition/MIT_code/csv_files_for_matrix/32_dimension'
 			df.to_csv(save_csv+str(currentDT)+'.csv')
 			print(df)
 
