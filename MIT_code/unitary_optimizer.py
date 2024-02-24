@@ -1,8 +1,5 @@
 import torch
-from torch.autograd import Variable
 import torch.optim as optim
-import gc
-import numpy as np
 import math
 from expm_module import torch_expm
 import datetime
@@ -69,8 +66,6 @@ class unitary_optimizer():
 
 		self.output = real_identity(self.target.size())
 
-		
-
 	def full_loss_calc(self):
 		self.output = self.construct_matrix(self.times)
 		loss = frobenius_norm(self.output, self.target)
@@ -100,161 +95,6 @@ class unitary_optimizer():
 		rand_times = ( torch.rand( (self.n_control_matrices, n_times), 
 			device = device, dtype = dtype) - 0.5 ) * 2*uniform_range
 		return self.format_time_tensor(rand_times, grad_bool = grad_bool)
-
-	def greedy_optimize(self, max_n_times = 100, epochs_per = 1000, print_statistics = True, 
-		manual_grad_calc = True, init_type = 'zeros', optim_type = 'Adam', relative_stop_rate = 1e-8,
-		absolute_stop_rate = 1e-7,	print_every = 100, min_epochs = 15, init_range = 0.01, normalize_learning_rate = 1.0,
-		 **kwargs):
-		'''optimizes by adding a layer of times each round and optimizing until convergence
-
-		Inputs:
-			max_n_times: (int) maximum depth (e.g. 10 means there will be 10 parameters per control matrix)
-			epochs_per: (int) epochs of training per round
-			print_statistics: (bool) prints error values if set to True
-			print_every: (int) print error values every given iteration
-			manual_grad_calc: (bool) determines whether pytorch automatically calculates gradients or manually calculated (set to True for now)
-			init_type: (string) choose from 'zeros', 'random', or 'search'
-			optim_type: (string) choose 'Adam', 'SGD', or 'LBFGS' for optimization method
-			relative_stop_rate: (double) value of relative stop rate to move onto next round
-			absolute_stop_rate: (double) value to stop after convergence reached
-			**kwargs: arguments passed into the chosen pytorch optimizer
-		'''
-		
-		# set values for inputs
-		self.relative_stop_rate = relative_stop_rate
-		self.absolute_stop_rate = absolute_stop_rate
-		self.max_epochs = epochs_per
-		self.min_epochs = min_epochs
-
-		self.optim_type = optim_type
-
-		if init_type == 'random':
-			self.times = self.randomly_initialize_times(1, grad_bool = True)
-		elif init_type == 'search':
-			self.times = self.search_times_append(grid_range = init_range)
-		elif init_type == 'zeros':
-			init_times = torch.zeros([self.n_control_matrices, 1], device = device, dtype = dtype)
-			self.times = self.format_time_tensor(init_times)
-		else:
-			raise ValueError('Please input valid initialization type')
-
-		self.n_times = 1
-
-		self.manual_grad_calc = manual_grad_calc
-
-		for round_i in range(max_n_times):
-			print()
-			print('Beginning round {}'.format(round_i+1))
-			if print_statistics:
-				print('Starting times for round:')
-				print(self.times)
-			
-			kwargs['lr'] = kwargs['lr']/ normalize_learning_rate
-
-			if optim_type == 'Adam':
-				self.optimizer = optim.Adam([self.times], **kwargs)
-			elif optim_type == 'SGD':
-				self.optimizer = optim.SGD([self.times], **kwargs)
-			elif optim_type == 'LBFGS':
-				self.optimizer = optim.LBFGS([self.times], **kwargs)
-			else:
-				raise ValueError('Please input valid optimization type')
-
-			loss = self.optimize_round(print_statistics = True, print_every = print_every)
-
-			if loss < self.absolute_stop_rate:
-				print('Final loss: {}'.format(loss))
-				print('Times:')
-				print(self.times)
-				return round_i
-
-			print('Loss at end of round: {}'.format(loss))
-			if print_statistics:
-				print('New Times:')
-				print(self.times)
-
-			# if not achieve absolute_stop_rate, append new times
-			self.append_times(init_type, init_range)
-		return -1	
-
-
-	def append_times(self, init_type, init_range):
-		'''method used in greedy_optimize to append time to self.times
-
-		Inputs:
-			init_type: (string) set to given strings to specify type of initialization
-			init_range: (double) range of initialization for randomization or search
-		'''
-		if init_type == 'random':
-			new_times = self.randomly_initialize_times(1, grad_bool = True, uniform_range = init_range)
-		elif init_type == 'search':
-			new_times = self.search_times_append(grid_range = init_range)
-		elif init_type == 'zeros':
-			init_times = torch.zeros([self.n_control_matrices, 1], device = device, dtype = dtype)
-			new_times = self.format_time_tensor(init_times)
-		else:
-			raise ValueError('Please input valid initialization type')
-
-		self.times = torch.cat( (self.times, new_times) )
-		self.n_times += 1
-
-
-	def optimize_round(self, print_statistics = True, print_every = 10):
-		''' method used in greedy_optimize to optimize each round
-		'''
-		# intialize epoch number and loss values
-		epoch_i = 0
-		change_loss = self.relative_stop_rate*10 # initialize to something larger than the relative_stop rate
-		prior_loss = 99999999
-
-		while (epoch_i < self.max_epochs and change_loss > self.relative_stop_rate) \
-		or epoch_i < self.min_epochs:
-			if not self.manual_grad_calc:
-				self.optimizer.zero_grad()
-			
-			loss = self.full_loss_calc()
-
-			if print_statistics:
-				if epoch_i%print_every == 0:
-					print('[%d] loss: %.3E' % (epoch_i , loss ))
-			
-			if self.manual_grad_calc:
-				self.times.grad = self.manual_gradients()
-			else:
-				loss.backward()
-
-			if self.optim_type == 'LBFGS':
-				self.optimizer.step(self.full_loss_calc)
-			else:
-				self.optimizer.step()
-
-			change_loss = (prior_loss - loss) / prior_loss
-			prior_loss = loss		
-			epoch_i += 1
-
-		if print_statistics:
-			print('Total number of epochs: {}'.format(epoch_i))
-
-		return loss
-
-
-	def search_times_append(self, n_grid = 1001, grid_range = math.pi, appending = True):
-		# create grid of times
-		grid_times = torch.linspace(-1*grid_range,grid_range,steps=n_grid, device = device, dtype = dtype)
-		grid_times = torch.reshape(grid_times, [n_grid,1])
-		
-		# initialize vector containing new times
-		new_times = torch.zeros([self.n_control_matrices, 1], device = device, dtype = dtype)
-
-		for i, matrix_i in enumerate(self.control_matrices_real):
-			# find optimal new time and matrix
-			optim_time, optim_matrix = self.grid_loss_search(torch.reshape(matrix_i, [1,self.dim_matrix, self.dim_matrix]), 
-															 grid_times, appending = appending)
-			new_times[i] = optim_time
-			# update output to take into account change
-			self.output = torch.reshape(optim_matrix, [1,self.dim_matrix, self.dim_matrix])
-		
-		return new_times
 
 	def propogate_round(self, n_grid = 1001, grid_range = math.pi, appending = False):
 		
@@ -523,8 +363,6 @@ class unitary_optimizer():
 
 		self.times = temp_store_times
 		return x_vals, y_vals, loss_vals
-
-
 
 
 def batch_matrix_multiply(matrices):

@@ -23,7 +23,7 @@ def torch_expm(A):
     U, V = torch_pade13(Ascaled)
     P = U + V
     Q = -U + V
-    R, _ = torch.solve(P, Q) # solve P = Q*R
+    R = torch.linalg.solve(Q, P)
     
     # Unsquaring step
     expmA = [ ]
@@ -53,21 +53,3 @@ def torch_pade13(A):
     U = torch.matmul(A, torch.matmul(A6, b[13]*A6 + b[11]*A4 + b[9]*A2) + b[7]*A6 + b[5]*A4 + b[3]*A2 + b[1]*ident)
     V = torch.matmul(A6, b[12]*A6 + b[10]*A4 + b[8]*A2) + b[6]*A6 + b[4]*A4 + b[2]*A2 + b[0]*ident
     return U, V
-
-#%%
-if __name__ == '__main__':
-    from scipy.linalg import expm
-    import numpy as np
-    n = 10
-    A = torch.randn(n,4,4)
-    A[:,2,:] = 0
-    A[9,:,:] = torch.tensor([[0,0,0,-2],[0,0,-2,0],[0,2,0,0], [2,0,0,0]])
-    print(A)
-
-    
-    expm_scipy = np.zeros_like(A)
-    for i in range(n):
-        expm_scipy[i] = expm(A[i].numpy())
-    expm_torch = torch_expm(A).numpy()
-    print(expm_torch)
-    print('Difference: ', np.linalg.norm(expm_scipy - expm_torch))

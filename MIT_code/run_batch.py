@@ -66,7 +66,7 @@ for i, ii in zip(dimensions, dimensions_raw):
 
 
 			# example setup for vanilla gradient descent optimizer
-			a.optimize(n_epochs = 10000, lr = lr/ii, weight_decay = 0.0, manual_grad_calc = True,
+			a.optimize(n_epochs = 100, lr = lr/ii, weight_decay = 0.0, manual_grad_calc = True,
 						n_times = i, optim_type = 'SGD', save_results = save_results, print_every = print_freq,
 						absolute_stop_rate = 1e-7*n*n, momentum = 0 ) # n_times = n_layers
 
