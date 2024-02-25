@@ -5,6 +5,7 @@ from expm_module import torch_expm
 import datetime
 import pandas as pd
 import config
+import os
 
 # selecting float32 for data type (can also be float64)
 dtype = config.dtype
@@ -254,8 +255,13 @@ class unitary_optimizer():
 
 			df = pd.DataFrame(data=pd_cols)
 			currentDT = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
-			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/MIT_code/csv_files_for_matrix/dimension_32'
-			df.to_csv(save_csv+str(currentDT)+'.csv')
+			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/MIT_code/csv_files_for_matrix/dimension_32/'
+
+			save_csv_dir = os.path.dirname(save_csv)
+			if not os.path.exists(save_csv_dir):
+				os.makedirs(save_csv_dir)
+
+			df.to_csv(f"{save_csv}_{currentDT}.csv")
 			print(df)
 
 	def manual_gradients(self):
