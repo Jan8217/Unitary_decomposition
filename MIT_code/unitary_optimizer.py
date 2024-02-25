@@ -253,8 +253,8 @@ class unitary_optimizer():
 				}
 
 			df = pd.DataFrame(data=pd_cols)
-			currentDT = datetime.datetime.now()
-			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary-decomposition/MIT_code/csv_files_for_matrix/32_dimension'
+			currentDT = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
+			save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/MIT_code/csv_files_for_matrix/dimension_32'
 			df.to_csv(save_csv+str(currentDT)+'.csv')
 			print(df)
 
