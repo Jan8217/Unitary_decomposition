@@ -76,7 +76,7 @@ class unitary_optimizer():
 	def format_time_tensor(self, time_tensor, grad_bool = True):
 		depth = time_tensor.size()[1]
 		times_tiled = time_tensor.t().reshape((time_tensor.size()[0]*depth, 1))
-		return torch.tensor(times_tiled, device = device, dtype = dtype, requires_grad = grad_bool)
+		return times_tiled.clone().detach().to(device = device, dtype = dtype).requires_grad_(grad_bool)
 
 	def construct_matrix(self, time_params, multiply_forward = True, forward_pass = True):
 		if self.manual_grad_calc:
