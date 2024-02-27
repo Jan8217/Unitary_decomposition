@@ -9,6 +9,9 @@ from circuit_ud_matrix import Circuit_manager
 import pennylane as qml
 from scipy.stats import unitary_group
 from torch.autograd import Variable
+import pandas as pd
+import datetime
+import csv
 
 dev = qml.device('default.qubit', wires=3)
 
@@ -45,7 +48,7 @@ class DQAS4RL:
                  total_epochs=5000,
                  struc_learning=True,
                  struc_early_stop=0,
-                 min_loss=0.0001):
+                 min_loss=0.01):
 
         self.qdqn = qdqn
         self.cm = cm
@@ -241,7 +244,7 @@ class DQAS4RL:
         if epoch % self.update_model == 0:
             loss = self.train_model(prob)
             epoch_loss.append(loss)
-            print('[%d] loss: %.3f' % (epoch + 1, loss))
+            print('[%d] loss: %.3E' % (epoch + 1, loss))
 
         self.epoch_count += 1
         epoch_avg_loss = np.mean(epoch_loss)
@@ -289,23 +292,52 @@ class DQAS4RL:
         records_avg_loss = []
         records_probs = []
         self.push_json(self.cm.ops, self.log_dir + 'operation_pool')
+        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
 
-        for t in range(self.total_epochs):
-            # train dqn
-            train_report = self.epoch_train(t)
-            postfix_stats['train/epoch_loss'] = train_report['avg_loss']
-            postfix_stats['train/epochs'] = train_report['steps']
-            postfix_stats['strucl'] = self.struc_learning
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
+        filename = f'epoch_loss_{timestamp}.csv'
 
-            records_steps.append(train_report['steps'])
-            records_avg_loss.append(train_report['avg_loss'])
-            if self.struc_learning:
-                records_probs.append(train_report['prob'].tolist())
+        with open(os.path.join(self.log_dir, filename), mode='w', newline='') as file:
+            writer = csv.writer(file)
 
-            if records_avg_loss[-1] <= self.min_loss:
-                output = f"problem solved at epoch {t}, with loss {records_avg_loss[-1]}"
+            writer.writerow(['steps', 'avg_loss'])
+
+            for t in range(self.total_epochs):
+                # train dqn
+                train_report = self.epoch_train(t)
+                postfix_stats['train/epoch_loss'] = train_report['avg_loss']
+                postfix_stats['train/epochs'] = train_report['steps']
+                postfix_stats['strucl'] = self.struc_learning
+
+                records_steps.append(train_report['steps'])
+                records_avg_loss.append(train_report['avg_loss'])
                 if self.struc_learning:
-                    output += "learning state {self.struc_learning}"
-                self.push_json(output, self.log_dir + 'problem_solved.json')
-                print(output)
-                break
+                    records_probs.append(train_report['prob'].tolist())
+
+                writer.writerow([t, train_report['avg_loss']])
+
+                if records_avg_loss[-1] <= self.min_loss:
+                    output = f"problem solved at epoch {t}, with loss {records_avg_loss[-1]}"
+                    if self.struc_learning:
+                        output += "learning state {self.struc_learning}"
+                    self.push_json(output, self.log_dir + 'problem_solved.json')
+                    print(output)
+                    break
+
+
+'''
+pd_cols = {
+    'number of loss': [train_report['avg_loss']],
+    'gradient descent step': [train_report['steps']]
+}
+df = pd.DataFrame(data=pd_cols)
+currentDT = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
+save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
+
+save_csv_dir = os.path.dirname(save_csv)
+if not os.path.exists(save_csv_dir):
+    os.makedirs(save_csv_dir)
+
+df.to_csv(f"{save_csv}_{currentDT}.csv")
+#print(df)
+'''

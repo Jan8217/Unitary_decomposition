@@ -4,15 +4,19 @@ from circuit_ud_matrix import QDQN, Circuit_manager
 from trainer_matrix import DQAS4RL
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--num_layers", default=2, type=int)
+parser.add_argument("--num_layers", default=1, type=int)
 parser.add_argument("--num_placeholders", default=20, type=int)
 parser.add_argument("--num_qubits", default=3, type=int)
 args = parser.parse_args()
 
 start = timeit.default_timer()
-ops = {0:("RX",[0]), 1:("RY",[2]), 2:("RZ",[1])
-         , 3:("CNOT",[0,1]), 4:("CNOT",[1,2])
-         , 5:("CNOTT", [0]), 6:("H", [0,2]), 7:("E", [0,1,2])}
+ops = {0:("U3", [0]), 1:("U3", [1]), 2:("U3", [2])
+        , 3:("CU3-single", [0]), 4:("CU3-single", [1])
+        , 5:("CU33", [0])
+        , 6:("CNOT",[0]), 7:("CNOT",[1])
+        , 8:("CNOTT", [0])
+        , 9:("H", [2])
+        , 10:("E", [0,1,2])}
 sphc_struc = []
 sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
 cm = Circuit_manager(sphc_struc=sphc_struc
@@ -30,7 +34,7 @@ qdqn = QDQN(cm=cm
         , barrier=False
         , seed=1234)
 dqas4rl = DQAS4RL(qdqn=qdqn,
-                  lr=0.001,
+                  lr=0.01,
                   lr_struc=0.01,
                   batch_size=32,
                   update_model=1,
@@ -47,7 +51,7 @@ dqas4rl = DQAS4RL(qdqn=qdqn,
                   early_stop=195,
                   structure_batch=10,
                   struc_learning=cm.learning_state,
-                  total_epochs=10000,
+                  total_epochs=1000,
                   struc_early_stop=0)
 dqas4rl.learn()
 stop = timeit.default_timer()
