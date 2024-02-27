@@ -1,0 +1,4 @@
+steps,avg_loss,end loss,total steps,filename
+0,3.979557802535824,3.979557802535824,0,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5\epoch_loss.csv
+0,3.8815265162604655,1.7955395747758716,999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5\epoch_loss_2024-02-27 18_50_08.csv
+0,3.991061922878039,2.095435279009412,999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5\epoch_loss_2024-02-27 18_52_09.csv
