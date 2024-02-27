@@ -15,7 +15,9 @@ def return_steps_and_loss_vecs(df):
 		y_vec.append(df[rows]['loss'].to_numpy())
 	return filenames, x_vec, y_vec
 
+
 def build_param_colormap(df):
+
 	params = pd.unique(df.sort_values(by=['number of time parameters'])['number of time parameters'])
 	print(params)
 	colormap = {}
@@ -41,7 +43,7 @@ def build_and_save_plot(df, filename,
 	colormap = build_param_colormap(df)
 
 	# style
-	plt.style.use('seaborn-darkgrid')
+	plt.style.use('seaborn-v0_8-darkgrid')
 	 
 	# create a color palette
 	palette = plt.get_cmap('Set1')
@@ -53,12 +55,18 @@ def build_and_save_plot(df, filename,
 
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
-	labels, handles = zip(*sorted(zip(by_label.keys(), by_label.values()), key=lambda t: int(t[0])))
-	print(labels)
-	labels = format_param_str(labels, pd.unique(df[df['filename'] == file_i]['dimension of unitary matrix']))
-	print(labels)
-	plt.legend(handles, labels, bbox_to_anchor=(1.02,1), 
-		title = legend_title)
+
+	if by_label:
+		labels, handles = zip(*sorted(by_label.items(), key=lambda t: int(t[0])))
+		unique_dims = pd.unique(df['dimension of unitary matrix'])
+
+		if unique_dims.size > 0:
+			labels = format_param_str(labels, unique_dims)
+			plt.legend(handles, labels, bbox_to_anchor=(1.02, 1), title=legend_title)
+
+		else:
+			print("Warning: 'dimension of unitary matrix' is empty.")
+
 
 	plt.subplots_adjust(right=0.75)
 
@@ -67,45 +75,20 @@ def build_and_save_plot(df, filename,
 
 	fig = plt.gcf()
 	fig.set_size_inches(5,4)
-
 	plt.savefig("./figures/"+filename)	
-	plt.close()
+	#plt.close()
 
 
 
 if __name__ == '__main__':
 
-	# df = pd.read_csv('./csv_files/combined_csv/new_dataset_for_full_plots_full.csv')
-	# print(df.columns)
-
-	# build_and_save_plot(df, 'figure_full_unitary_expanded.pdf', '# params (2K)')
-
-	df = pd.read_csv('./csv_files/combined_csv/all_runs_paper_full_2.csv')
-	print(df.columns)
-
+	df = pd.read_csv('C:/Users/yanzh/PycharmProjects/Unitary_decomposition/MIT_code/csv_files_for_matrix/dimension_32/combined_csv/new_dataset_for_full_plots_full.csv')
 	build_and_save_plot(df, 'figure_d4_unitary.pdf', '# params (2K)')
 
 
-	df = pd.read_csv('./csv_files/combined_csv/all_runs_paper_full_3_adam.csv')
-	print(df.columns)
+	build_and_save_plot(df[df['number of target parameters'] == 8],
+						'figure_d4_unitary_adam.pdf',
+						legend_title='# params (2K)',
+						x_axis_label='Num. of Adam optimizer steps')
+	plt.show()
 
-	build_and_save_plot(df[df['number of target parameters'] == 8], 
-		'figure_d4_unitary_adam.pdf', 
-		legend_title = '# params (2K)', 
-		x_axis_label = 'Num. of Adam optimizer steps')
-	build_and_save_plot(df[df['number of target parameters'] != 8], 
-		'figure_full_unitary_adam.pdf',
-		legend_title = '# params (2K)', 
-		x_axis_label = 'Num. of Adam optimizer steps')
-
-
-	# df = pd.read_csv('./csv_files/combined_csv/all_runs_paper_full_4.csv')
-	# print(df.columns)
-
-	# build_and_save_plot(df, 'figure_d2_unitary.pdf', '# params (2K)')
-
-
-	# df = pd.read_csv('./csv_files/combined_csv/all_runs_paper_full_5.csv')
-	# print(df.columns)
-
-	# build_and_save_plot(df, 'figure_full_transition_unitary.eps', '# params (2K)')
