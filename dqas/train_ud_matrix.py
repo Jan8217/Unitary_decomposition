@@ -51,7 +51,7 @@ dqas4rl = DQAS4RL(qdqn=qdqn,
                   early_stop=195,
                   structure_batch=10,
                   struc_learning=cm.learning_state,
-                  total_epochs=1000,
+                  total_epochs=100,
                   struc_early_stop=0)
 dqas4rl.learn()
 stop = timeit.default_timer()

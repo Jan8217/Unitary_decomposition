@@ -14,17 +14,15 @@ import datetime
 import csv
 
 dev = qml.device('default.qubit', wires=3)
-
-
 U = unitary_group.rvs(8)
-
-
 @qml.qnode(dev, interface='torch')
 def target_state():
     qml.QubitUnitary(U, wires=[0, 1, 2])
     return qml.state()
 TARGET = torch.eye(8)
 LOSS_FACTOR = 1
+
+
 class DQAS4RL:
     def __init__(self,
                  qdqn,
@@ -75,7 +73,7 @@ class DQAS4RL:
         self.logging = logging
         self.sub_batch_size = sub_batch_size
         self.structure_batch = structure_batch
-        self.dtype = torch.float32  # TODO think this dtype
+        self.dtype = torch.float32
         self.config()
 
     def config(self):
@@ -93,7 +91,7 @@ class DQAS4RL:
             self.var_struc = torch.tensor(v_struc_init, requires_grad=True, dtype=self.dtype, device=self.device)
 
         # set loss functions
-        self.loss_func = getattr(nn, self.loss_func_name + 'Loss')()
+       # self.loss_func = getattr(nn, self.loss_func_name + 'Loss')()
         torch_opt = getattr(topt, self.opt_name)
         if self.struc_learning:
             torch_opt_struc = getattr(topt, self.opt_name_struc)
@@ -105,18 +103,6 @@ class DQAS4RL:
         self.opt = torch_opt(params, lr=self.lr)
         if self.struc_learning:
             self.opt_struc = torch_opt_struc([self.var_struc], lr=self.lr_struc, betas=(0.9, 0.99), weight_decay=0.001)
-
-        if self.logging:
-            if not os.path.exists('./logs/'):
-                os.makedirs('./logs/')
-            out_path =  "_"  + "_"
-            self.log_dir = f'./logs/{out_path}/'
-            self.reprot_dir = f'./logs/{out_path}/reports/'
-            if not os.path.exists(self.log_dir):
-                os.makedirs(self.log_dir)
-            if not os.path.exists(self.reprot_dir):
-                os.makedirs(self.reprot_dir)
-            self.writer = SummaryWriter(log_dir=self.log_dir)
 
         self.global_step = 0
         self.epoch_count = 0
@@ -291,7 +277,7 @@ class DQAS4RL:
         records_steps = []
         records_avg_loss = []
         records_probs = []
-        self.push_json(self.cm.ops, self.log_dir + 'operation_pool')
+        #self.push_json(self.cm.ops, self.log_dir + 'operation_pool')
         self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
@@ -320,7 +306,7 @@ class DQAS4RL:
                     output = f"problem solved at epoch {t}, with loss {records_avg_loss[-1]}"
                     if self.struc_learning:
                         output += "learning state {self.struc_learning}"
-                    self.push_json(output, self.log_dir + 'problem_solved.json')
+                    #self.push_json(output, self.log_dir + 'problem_solved.json')
                     print(output)
                     break
 
