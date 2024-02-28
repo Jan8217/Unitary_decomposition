@@ -54,3 +54,12 @@ epochs = 1000  # 定义训练的epochs数量
 optimized_params = train(params, epochs)
 
 print("Optimized parameters:", optimized_params)
+
+
+
+dev = qml.device('default.qubit', wires=3)
+U = unitary_group.rvs(8)
+@qml.qnode(dev, interface='torch')
+def target_state():
+    qml.QubitUnitary(U, wires=[0, 1, 2])
+    return qml.state()

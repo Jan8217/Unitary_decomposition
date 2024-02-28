@@ -3,22 +3,11 @@ import torch
 import numpy as np
 from torch import nn
 import torch.optim as topt
-from torch.utils.tensorboard import SummaryWriter
-import json
 from circuit_ud_matrix import Circuit_manager
-import pennylane as qml
-from scipy.stats import unitary_group
-from torch.autograd import Variable
-import pandas as pd
 import datetime
 import csv
 
-dev = qml.device('default.qubit', wires=3)
-U = unitary_group.rvs(8)
-@qml.qnode(dev, interface='torch')
-def target_state():
-    qml.QubitUnitary(U, wires=[0, 1, 2])
-    return qml.state()
+
 TARGET = torch.eye(8)
 LOSS_FACTOR = 1
 
@@ -46,7 +35,7 @@ class DQAS4RL:
                  total_epochs=5000,
                  struc_learning=True,
                  struc_early_stop=0,
-                 min_loss=0.01):
+                 min_loss=0.1):
 
         self.qdqn = qdqn
         self.cm = cm
@@ -91,7 +80,7 @@ class DQAS4RL:
             self.var_struc = torch.tensor(v_struc_init, requires_grad=True, dtype=self.dtype, device=self.device)
 
         # set loss functions
-       # self.loss_func = getattr(nn, self.loss_func_name + 'Loss')()
+        self.loss_func = getattr(nn, self.loss_func_name + 'Loss')()
         torch_opt = getattr(topt, self.opt_name)
         if self.struc_learning:
             torch_opt_struc = getattr(topt, self.opt_name_struc)
@@ -107,17 +96,25 @@ class DQAS4RL:
         self.global_step = 0
         self.epoch_count = 0
 
+
     def matrix_loss_func(self, a, b):
         return torch.linalg.norm(b - a)
         #return 1 - qml.math.fidelity(b, a, check_state= True)
 
-    def push_json(self, out, path):
-        with open(path, 'w') as f:
-            json.dump(out, f, indent=4)
+    #def push_json(self, out, path):
+    ##    with open(path, 'w') as f:
+    #        json.dump(out, f, indent=4)
+
+    #def train_structure(self):
+    #    pass
+
+    #def make_inputs(self, states, struc):
+    #    return torch.cat((states, struc), 1)
 
     def preset_byprob(self, prob):
         return np.array([np.random.choice(np.arange(prob.size()[1])
                         , p=np.array(prob[i].detach().cpu().clone().numpy())) for i in range(prob.size()[0])])
+
     def train_model(self, prob):
 
         self.qdqn.train()
@@ -155,13 +152,12 @@ class DQAS4RL:
 
                 sum_sample_strucs += sub_sum
                 if sub_sum:
-                    sub_loss.backward(retain_graph=True)
+                    sub_loss.backward()
                     ## -- gradient --
                     for name, param in self.qdqn.named_parameters():
 
                         if param.grad is None:
-                            gr = torch.from_numpy(np.zeros(self.cm.get_weights_shape(), dtype=np.float32)).type(
-                                self.dtype)
+                            gr = torch.from_numpy(np.zeros(self.cm.get_weights_shape(), dtype=np.float32)).type(self.dtype)
                         else:
                             gr = param.grad.detach().clone()
                         summary = grad_params.get(name, [])
@@ -171,8 +167,7 @@ class DQAS4RL:
                 loss_list.append(sub_loss)
                 with torch.no_grad():
                     grad_struc = (-prob).type(self.dtype).to(self.device).index_put(
-                        indices=tuple(
-                            torch.LongTensor(list(zip(range(self.cm.current_num_placeholders), sample_struc))).t())
+                        indices=tuple(torch.LongTensor(list(zip(range(self.cm.current_num_placeholders), sample_struc))).t())
                         , values=torch.ones([self.cm.current_num_placeholders], dtype=self.dtype, device=self.device)
                         , accumulate=True).to(self.device)
                     deri_struc.append(((sub_loss - self.avcost) * grad_struc).to(self.device))
@@ -189,27 +184,24 @@ class DQAS4RL:
                                 self.device)
 
                 self.opt.step()
+
             with torch.no_grad():
                 grad_batch_struc = torch.mean(torch.stack(deri_struc), dim=0).type(self.dtype).to(self.device)
                 self.var_struc.grad = grad_batch_struc
 
-
             self.opt_struc.step()
-            # self.opt_beta.step()
-            #predicted_for_show()
         else:
             self.qdqn.train()
-            #self.opt.zero_grad()
+            self.opt.zero_grad()
             # -- predicted --
             states = torch.Tensor([.0] * self.cm.num_qubits)
             predicted = self.qdqn(states)
 
             # -- target --
-            #expected_qvalues = TARGET
-            expected_qvalues = target_state()
+            expected_qvalues = TARGET
+            #expected_qvalues = target_state()
             total_loss = self.matrix_loss_func(predicted, expected_qvalues)
-            #total_loss.backward(retain_graph=True)
-
+            total_loss.backward()
             self.opt.step()
         return total_loss.item()
 
@@ -225,7 +217,9 @@ class DQAS4RL:
 
     def epoch_train(self, epoch):
         epoch_loss = []
+
         prob = self.update_prob()
+
         # train in batch
         if epoch % self.update_model == 0:
             loss = self.train_model(prob)
@@ -234,12 +228,11 @@ class DQAS4RL:
 
         self.epoch_count += 1
         epoch_avg_loss = np.mean(epoch_loss)
-        self.push_json([*self.cm.get_current_layer_struc()], self.log_dir + 'current_struc.json')
+        #self.push_json([*self.cm.get_current_layer_struc()], self.log_dir + 'current_struc.json')
 
         if epoch > self.struc_early_stop and self.struc_learning:
             # learning place and state updated
             prob = self.update_prob()
-            #print(prob)
             layer_learning_finished = self.cm.update_learning_places(prob=prob)
             if layer_learning_finished:
                 self.struc_learning = self.cm.learning_state
@@ -251,6 +244,7 @@ class DQAS4RL:
                     }
                 else:
                     pass
+
             torch_opt_struc = getattr(topt, self.opt_name_struc)
             v_struc_update_init = np.zeros([self.cm.current_num_placeholders, self.cm.num_ops], dtype=np.float32)
 
@@ -273,22 +267,22 @@ class DQAS4RL:
             }
 
     def learn(self):
+
         postfix_stats = {}
         records_steps = []
         records_avg_loss = []
         records_probs = []
-        #self.push_json(self.cm.ops, self.log_dir + 'operation_pool')
-        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
 
+        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         filename = f'epoch_loss_{timestamp}.csv'
 
         with open(os.path.join(self.log_dir, filename), mode='w', newline='') as file:
             writer = csv.writer(file)
-
             writer.writerow(['steps', 'avg_loss'])
 
             for t in range(self.total_epochs):
+
                 # train dqn
                 train_report = self.epoch_train(t)
                 postfix_stats['train/epoch_loss'] = train_report['avg_loss']
