@@ -8,18 +8,23 @@ n_repeats = 10
 for k in range(n_repeats):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_layers", default=1, type=int)
-    parser.add_argument("--num_placeholders", default=25, type=int)
+    parser.add_argument("--num_placeholders", default=10, type=int)
     parser.add_argument("--num_qubits", default=3, type=int)
     args = parser.parse_args()
 
     start = timeit.default_timer()
-    ops = {0:("U3", [0]), 1:("U3", [1]), 2:("U3", [2])
-            , 3:("CU3-single", [0]), 4:("CU3-single", [1])
-            , 5:("CU33", [0])
-            , 6:("CNOT",[0]), 7:("CNOT",[1])
-            , 8:("CNOTT", [0])
-            , 9:("H", [2])
-            , 10:("E", [0,1,2])}
+    #ops = {0:("U3", [0]), 1:("U3", [1]), 2:("U3", [2])
+    #        , 3:("CU3-single", [0]), 4:("CU3-single", [1])
+    #        , 5:("CU33", [0])
+    #        , 6:("CNOT",[0]), 7:("CNOT",[1])
+    #        , 8:("CNOTT", [0])
+    #        , 9:("H", [2])
+    #        , 10:("E", [0,1,2])}
+    ops = {0: ("RZ", [0]), 1: ("RZ", [1]), 2: ("RZ", [2])
+        , 3: ("CNOT", [0]), 4: ("CNOT", [1])
+        , 5: ("CNOTT", [0])
+        , 6: ("H", [2])
+        , 7: ("E", [0, 1, 2])}
     sphc_struc = []
     sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
     cm = Circuit_manager(sphc_struc=sphc_struc
