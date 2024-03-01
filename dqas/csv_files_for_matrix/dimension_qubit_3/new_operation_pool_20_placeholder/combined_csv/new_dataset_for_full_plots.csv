@@ -1,0 +1,11 @@
+steps,avg_loss,end loss,total steps,filename
+0,3.952724016761195,3.952724016761195,0,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-28 23_32_06.csv
+0,3.865433484572857,2.8288323879241943,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-28 23_56_26.csv
+0,3.987645744841559,2.828788042068481,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 00_24_40.csv
+0,3.9494762420654297,2.82934832572937,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 00_51_00.csv
+0,4.03966236114502,2.8292033672332764,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 01_16_19.csv
+0,3.9872500896453857,2.8286678791046143,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 01_41_54.csv
+0,4.002481508255005,2.8296477794647217,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 02_06_48.csv
+0,4.005091643115511,2.829331159591675,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 02_30_37.csv
+0,4.019534397125244,2.82854962348938,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 02_56_22.csv
+0,4.025103902816772,2.828766345977783,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_20\epoch_loss_2024-02-29 03_23_34.csv

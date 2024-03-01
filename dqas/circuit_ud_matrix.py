@@ -328,6 +328,9 @@ def circuit(cm: Circuit_manager, data_reuploading=False, barrier=False):  # keep
             elif op == "CNOT":
                 for i in op_range:
                     qml.CNOT(wires=[i, (i + 1) % cm.num_qubits])
+            elif op == "CNOTT":
+                for i in op_range:
+                    qml.CNOT(wires=[i, (i + 2) % cm.num_qubits])
             elif op == "rz-CNOT-rz":
                 i = op_range[0]
                 qml.RZ(theta_weight[i + 1, p, indexs[p]] * SINGLEGATEFACTOR, wires=i + 1)

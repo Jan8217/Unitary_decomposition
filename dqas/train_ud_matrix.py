@@ -8,7 +8,7 @@ n_repeats = 10
 for k in range(n_repeats):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_layers", default=1, type=int)
-    parser.add_argument("--num_placeholders", default=10, type=int)
+    parser.add_argument("--num_placeholders", default=20, type=int)
     parser.add_argument("--num_qubits", default=3, type=int)
     args = parser.parse_args()
 
@@ -20,11 +20,14 @@ for k in range(n_repeats):
     #        , 8:("CNOTT", [0])
     #        , 9:("H", [2])
     #        , 10:("E", [0,1,2])}
+    #ops = {0: ("RX", [0,1]), 1: ("RY", [1,2]), 2: ("RZ", [0, 2])
+    #    , 3: ("CNOT", [0,1]), 4: ("CNOTT", [0]), 5: ("H", [2]), 6: ("E", [0, 1, 2])}
     ops = {0: ("RZ", [0]), 1: ("RZ", [1]), 2: ("RZ", [2])
         , 3: ("CNOT", [0]), 4: ("CNOT", [1])
         , 5: ("CNOTT", [0])
         , 6: ("H", [2])
-        , 7: ("E", [0, 1, 2])}
+        , 7: ("E", [0,1,2])}
+
     sphc_struc = []
     sphc_ranges = [[*range(args.num_qubits)] for _ in range(len(sphc_struc))]
     cm = Circuit_manager(sphc_struc=sphc_struc
@@ -34,7 +37,7 @@ for k in range(n_repeats):
                         , num_layers=args.num_layers
                         , ops=ops
                         , noisy=False
-                        , learning_step=5)
+                        , learning_step=10)
 
     # Define quantum network
     qdqn = QDQN(cm=cm
@@ -42,7 +45,7 @@ for k in range(n_repeats):
             , barrier=False
             , seed=1234)
     dqas4rl = DQAS4RL(qdqn=qdqn,
-                      lr=0.01,
+                      lr=0.001,
                       lr_struc=0.01,
                       batch_size=32,
                       update_model=1,

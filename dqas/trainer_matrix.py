@@ -8,17 +8,17 @@ import datetime
 import csv
 
 
-#TARGET = torch.eye(8)
-TARGET = torch.Tensor(np.array([[1., 0., 0., 0., 0., 0., 0., 0.]
-                       , [0., 1., 0., 0., 0., 0., 0., 0.]
-                       , [0., 0., 1., 0., 0., 0., 0., 0.]
-                       , [0., 0., 0., 1., 0., 0., 0., 0.]
-                       , [0., 0., 0., 0., 1., 0., 0., 0.]
-                       , [0., 0., 0., 0., 0., 1., 0., 0.]
-                       , [0., 0., 0., 0., 0., 0., 0., 1.]
-                       , [0., 0., 0., 0., 0., 0., 1., 0.]]))
+#
+#TARGET = torch.Tensor(np.array([[1., 0., 0., 0., 0., 0., 0., 0.]
+#                       , [0., 1., 0., 0., 0., 0., 0., 0.]
+#                       , [0., 0., 1., 0., 0., 0., 0., 0.]
+#                       , [0., 0., 0., 1., 0., 0., 0., 0.]
+#                       , [0., 0., 0., 0., 1., 0., 0., 0.]
+#                       , [0., 0., 0., 0., 0., 1., 0., 0.]
+#                       , [0., 0., 0., 0., 0., 0., 0., 1.]
+#                       , [0., 0., 0., 0., 0., 0., 1., 0.]]))
 LOSS_FACTOR = 1
-
+TARGET = torch.eye(8)
 
 class DQAS4RL:
     def __init__(self,
@@ -281,7 +281,7 @@ class DQAS4RL:
         records_avg_loss = []
         records_probs = []
 
-        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
+        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_03_20_placeholder/'
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         filename = f'epoch_loss_{timestamp}.csv'
 
@@ -311,21 +311,3 @@ class DQAS4RL:
                     #self.push_json(output, self.log_dir + 'problem_solved.json')
                     print(output)
                     break
-
-
-'''
-pd_cols = {
-    'number of loss': [train_report['avg_loss']],
-    'gradient descent step': [train_report['steps']]
-}
-df = pd.DataFrame(data=pd_cols)
-currentDT = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
-save_csv = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_5/'
-
-save_csv_dir = os.path.dirname(save_csv)
-if not os.path.exists(save_csv_dir):
-    os.makedirs(save_csv_dir)
-
-df.to_csv(f"{save_csv}_{currentDT}.csv")
-#print(df)
-'''
