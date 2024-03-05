@@ -281,7 +281,8 @@ class DQAS4RL:
         records_avg_loss = []
         records_probs = []
 
-        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_03_20_placeholder/'
+        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/' \
+                       'dimension_qubit_3/new_operation_pool_10/'
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         filename = f'epoch_loss_{timestamp}.csv'
 
