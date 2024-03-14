@@ -1,0 +1,11 @@
+steps,avg_loss,end loss,total steps,filename
+0,3.8910046058830767,3.8910046058830767,0,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 13_26_13.csv
+0,3.9620563070805694,1.7535322596694591,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 13_51_46.csv
+0,4.000089657581039,2.356793026608412,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 14_21_15.csv
+0,3.9402334843530857,1.3588631374999711,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 14_47_25.csv
+0,4.103801436511587,1.8736930719969096,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 15_17_36.csv
+0,3.948493102857993,1.8865570464516384,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 15_46_12.csv
+0,3.9573451328490767,1.0778708811088298,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 16_13_13.csv
+0,3.994635966001012,2.298907658406986,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 16_43_12.csv
+0,3.923079422793772,2.267368218708893,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 17_09_06.csv
+0,3.997516246113771,2.7226190197185067,9999,C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/new_operation_pool_15\epoch_loss_2024-03-06 17_34_00.csv

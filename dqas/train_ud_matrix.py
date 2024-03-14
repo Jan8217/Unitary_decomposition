@@ -4,13 +4,13 @@ from circuit_ud_matrix import QDQN, Circuit_manager
 from trainer_matrix import DQAS4RL
 
 
-dimensions = [0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
-n_repeats = 3
+dimensions = [0.0005,0.0001,0.00015]
+n_repeats = 1
 for i, in zip(dimensions):
     for k in range(n_repeats):
         parser = argparse.ArgumentParser()
         parser.add_argument("--num_layers", default=1, type=int)
-        parser.add_argument("--num_placeholders", default=20, type=int)
+        parser.add_argument("--num_placeholders", default=25, type=int)
         parser.add_argument("--num_qubits", default=3, type=int)
         args = parser.parse_args()
 
@@ -21,7 +21,11 @@ for i, in zip(dimensions):
                 , 6:("CNOT",[0]), 7:("CNOT",[1])
                 , 8:("CNOTT", [0])
                 , 9:("H", [2])
-                , 10:("E", [0,1,2])}
+                , 10:("E", [0,1,2]), 11: ("RX", [0]), 12: ("RY", [0]), 13: ("RZ", [0])
+                , 14: ("RX", [1]), 15: ("RY", [1]), 16: ("RZ", [1])
+                , 17: ("RX", [2]), 18: ("RY", [2]), 19: ("RZ", [2])
+
+        }
         #ops = {0: ("RX", [0,1]), 1: ("RY", [1,2]), 2: ("RZ", [0, 2])
         #    , 3: ("CNOT", [0,1]), 4: ("CNOTT", [0]), 5: ("H", [2]), 6: ("E", [0, 1, 2])}
         #ops = {0: ("RZ", [0]), 1: ("RZ", [1]), 2: ("RZ", [2])
@@ -64,7 +68,7 @@ for i, in zip(dimensions):
                           early_stop=195,
                           structure_batch=10,
                           struc_learning=cm.learning_state,
-                          total_epochs=10000,
+                          total_epochs=200000,
                           struc_early_stop=0)
 
         dqas4rl.learn()

@@ -209,9 +209,9 @@ class DQAS4RL:
         self.global_step = 0
         self.epoch_count = 0
 
-    def push_json(self, out, path):
-        with open(path, 'w') as f:
-            json.dump(out, f, indent=4)
+    #def push_json(self, out, path):
+    #    with open(path, 'w') as f:
+    #        json.dump(out, f, indent=4)
 
     def train_structure(self):
         pass

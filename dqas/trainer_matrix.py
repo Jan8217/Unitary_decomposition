@@ -6,6 +6,7 @@ import torch.optim as topt
 from circuit_ud_matrix import Circuit_manager
 import datetime
 import csv
+from scipy.stats import unitary_group
 
 
 #
@@ -18,7 +19,8 @@ import csv
 #                       , [0., 0., 0., 0., 0., 0., 0., 1.]
 #                       , [0., 0., 0., 0., 0., 0., 1., 0.]]))
 LOSS_FACTOR = 1
-TARGET = torch.eye(8)
+#TARGET = torch.eye(8)
+TARGET = torch.tensor(unitary_group.rvs(8))
 
 class DQAS4RL:
     def __init__(self,
@@ -281,8 +283,25 @@ class DQAS4RL:
         records_avg_loss = []
         records_probs = []
 
-        self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/' \
-                       'dimension_qubit_3/new_operation_pool_10/'
+        def check_and_create_folder(path):
+            if not os.path.exists(path):
+                os.makedirs(path)
+                #print("文件夹 '{}' 已创建.".format(path))
+            #
+        #print("文件夹 '{}' 已存在.".format(path))
+
+        # 指定文件夹路径
+        folder_path = "C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/dimension_qubit_3/"
+
+        # 检查并创建new_operation_pool_17文件夹
+        new_operation_pool_17_path = os.path.join(folder_path, "new_operation_pool_23")
+        check_and_create_folder(new_operation_pool_17_path)
+
+        # 更新self.log_dir为新的路径
+        self.log_dir = new_operation_pool_17_path
+
+        #self.log_dir = 'C:/Users/yanzh/PycharmProjects/Unitary_decomposition/dqas/csv_files_for_matrix/' \
+        #               'dimension_qubit_3/new_operation_pool_17/'
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         filename = f'epoch_loss_{timestamp}.csv'
 
